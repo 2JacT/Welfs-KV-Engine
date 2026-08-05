@@ -6,4 +6,5 @@
 #include <vector>
 #include <span>
 
-using KeyView = std::span<const std::byte>;
+using Key = std::span<const std::byte>;
+using Value = std::span<const std::byte>;
