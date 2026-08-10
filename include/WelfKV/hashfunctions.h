@@ -16,4 +16,4 @@ class XXHash : public HashFunction
             XXH64_hash_t hash = XXH3_64bits(key.data(), key.size_bytes());
             return hash;
         };
-};
+}; 
