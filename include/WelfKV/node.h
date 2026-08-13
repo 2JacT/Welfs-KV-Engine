@@ -1,28 +1,35 @@
 #pragma once
 #include <WelfKV/common.h>
-// NodeBytes is total inline payload size for one entry; key and value each get half (rounded down for key).
-template<std::size_t NodeBytes>
+#include <array>
+#include <cstring>
+
+template<std::size_t KeySize, std::size_t ValueSize>
 class node
 {
     public:
-        static constexpr std::size_t max_key_bytes = NodeBytes / 2;
-        static constexpr std::size_t max_value_bytes = NodeBytes - max_key_bytes;
+        using key_type = Key<KeySize>;
+        using value_type = Value<ValueSize>;
 
-        static bool fits(Key key, Value value)
+        static constexpr std::size_t max_key_bytes = KeySize;
+        static constexpr std::size_t max_value_bytes = ValueSize;
+
+        static bool fits(key_type key, value_type value)
         {
             return key.size_bytes() <= max_key_bytes && value.size_bytes() <= max_value_bytes;
         }
 
-        node(Key key, Value value)
+        node(key_type key, value_type value)
+            : key_view_(key_storage_)
+            , value_view_(value_storage_)
         {
             assign_key(key);
             assign_value(value);
         }
 
-        const Key& get_key() const { return key_view_; }
-        const Value& get_value() const { return value_view_; }
+        const key_type& get_key() const { return key_view_; }
+        const value_type& get_value() const { return value_view_; }
 
-        bool set_value(Value value)
+        bool set_value(value_type value)
         {
             if (value.size_bytes() > max_value_bytes)
             {
@@ -33,30 +40,20 @@ class node
         }
 
     private:
-        std::array<std::byte, max_key_bytes> key_storage_{};
-        std::size_t key_size_ = 0;
-        std::array<std::byte, max_value_bytes> value_storage_{};
-        std::size_t value_size_ = 0;
-        Key key_view_{};
-        Value value_view_{};
+        std::array<std::byte, KeySize> key_storage_{};
+        std::array<std::byte, ValueSize> value_storage_{};
+        key_type key_view_;
+        value_type value_view_;
 
-        void assign_key(Key key)
+        void assign_key(key_type key)
         {
-            key_size_ = std::min(key.size_bytes(), max_key_bytes);
-            if (key_size_ > 0)
-            {
-                std::memcpy(key_storage_.data(), key.data(), key_size_);
-            }
-            key_view_ = Key(key_storage_.data(), key_size_);
+            std::memcpy(key_storage_.data(), key.data(), KeySize);
+            key_view_ = key_type(key_storage_);
         }
 
-        void assign_value(Value value)
+        void assign_value(value_type value)
         {
-            value_size_ = std::min(value.size_bytes(), max_value_bytes);
-            if (value_size_ > 0)
-            {
-                std::memcpy(value_storage_.data(), value.data(), value_size_);
-            }
-            value_view_ = Value(value_storage_.data(), value_size_);
+            std::memcpy(value_storage_.data(), value.data(), ValueSize);
+            value_view_ = value_type(value_storage_);
         }
 };
