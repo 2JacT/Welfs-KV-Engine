@@ -1,22 +1,13 @@
 #pragma once
 #include <WelfKV/common.h>
+#include <cstdint>
 #include <xxhash.h>
 
-template<typename Config>
-class HashFunction
+template<typename Key>
+struct xxhash_function
 {
-    public:
-        virtual uint64_t Hash(typename Config::Key key) = 0;
-        virtual ~HashFunction() = default;
-};
-
-template<typename Config>
-class XXHash : public HashFunction<Config>
-{
-    public:
-        uint64_t Hash(typename Config::Key key) override
-        {
-            XXH64_hash_t hash = XXH3_64bits(key.data(), key.size_bytes());
-            return hash;
-        }
+    static uint64_t hash(Key key)
+    {
+        return XXH3_64bits(key.data(), key.size_bytes());
+    }
 };

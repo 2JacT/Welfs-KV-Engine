@@ -1,10 +1,6 @@
 #pragma once
 #include <vector>
-#include <WelfKV/bucket.h>
 #include <WelfKV/common.h>
-#include <WelfKV/hashfunctions.h>
-#include <WelfKV/strategy.h>
-#include <xxhash.h>
 
 template<typename Config>
 class Store
@@ -14,8 +10,8 @@ class Store
         using Value = typename Config::Value;
         using node_type = typename Config::node_type;
         using bucket_type = typename Config::bucket_type;
-        using strategy_type = typename Config::template strategy_for<Store<Config>>;
-        using hash_function_type = HashFunction<Config>;
+        using hash_function_type = typename Config::hash_function_type;
+        using strategy_type = typename Config::strategy_type;
 
         static constexpr std::size_t key_size = Config::key_size;
         static constexpr std::size_t value_size = Config::value_size;
@@ -24,28 +20,21 @@ class Store
 
         explicit Store(std::size_t num_buckets) : buckets(num_buckets) {}
 
-        uint64_t hash(Key key) const
-        {
-            //#TODO: Remove hard coded hash function and figure out how to make it customizable (compile time vs runtime config)
-            XXH64_hash_t digest = XXH3_64bits(key.data(), key.size_bytes());
-            return digest;
-        }
-
         bool insert(Key key, Value value)
         {
-            return strategy_type::insert(key, value, *this);
+            return strategy_type::insert(key, value, buckets);
         }
         bool upsert(Key key, Value value)
         {
-            return strategy_type::update(key, value, *this);
+            return strategy_type::update(key, value, buckets);
         }
         bool lookup(const Key& key, Value& value)
         {
-            return strategy_type::lookup(key, value, *this);
+            return strategy_type::lookup(key, value, buckets);
         }
         bool remove(const Key& key)
         {
-            return strategy_type::remove(key, *this);
+            return strategy_type::remove(key, buckets);
         }
         bool resize()
         {
