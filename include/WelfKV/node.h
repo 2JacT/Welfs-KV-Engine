@@ -3,6 +3,8 @@
 #include <array>
 #include <cstring>
 
+// node is one storage unit for a single key/value pair.
+// It defines the fixed byte layout for that pair; buckets collect nodes and define slot behavior.
 template<std::size_t KeySize, std::size_t ValueSize>
 class node
 {

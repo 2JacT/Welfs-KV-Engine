@@ -1,39 +1,13 @@
 #pragma once
+#include <WelfKV/strategies/probing/probing_strategy.h>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
 
-template<typename Strategy>
-concept HashTableStrategy = requires(
-    typename Strategy::key_type key,
-    typename Strategy::value_type value,
-    std::vector<typename Strategy::bucket_type>& buckets,
-    const typename Strategy::key_type& lookup_key,
-    typename Strategy::value_type& out_value)
-{
-    { Strategy::insert(key, value, buckets) } -> std::same_as<bool>;
-    { Strategy::lookup(lookup_key, out_value, buckets) } -> std::same_as<bool>;
-    { Strategy::update(key, value, buckets) } -> std::same_as<bool>;
-    { Strategy::remove(lookup_key, buckets) } -> std::same_as<bool>;
-    requires std::convertible_to<decltype(Strategy::uses_probing), bool>;
-};
-
-template<typename Key, typename Value, typename BucketType, typename HashFn>
-struct Probing_Strategy
-{
-    using key_type = Key;
-    using value_type = Value;
-    using bucket_type = BucketType;
-    using hash_function_type = HashFn;
-
-    protected:
-        static std::size_t start_slot(const std::vector<BucketType>& buckets, Key key)
-        {
-            return static_cast<std::size_t>(HashFn::hash(key) % buckets.size());
-        }
-};
-
+/*
+Linear_Probing_Strategy is the strategy that uses linear probing as its collision resolution mechanism.
+*/
 template<typename Key, typename Value, typename BucketType, typename HashFn>
 struct linear_probing_strategy : Probing_Strategy<Key, Value, BucketType, HashFn>
 {

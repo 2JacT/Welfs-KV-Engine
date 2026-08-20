@@ -2,6 +2,9 @@
 #include <vector>
 #include <WelfKV/common.h>
 
+/*
+Store class represents the key-value store. It takes a template parameter Config that contains the types for the key, value, hash function, and strategy, as well as other dependent types.
+*/
 template<typename Config>
 class Store
 {
@@ -16,8 +19,10 @@ class Store
         static constexpr std::size_t key_size = Config::key_size;
         static constexpr std::size_t value_size = Config::value_size;
 
+    protected:
         std::vector<bucket_type> buckets;
-
+    public:
+    
         explicit Store(std::size_t num_buckets) : buckets(num_buckets) {}
 
         bool insert(Key key, Value value)
