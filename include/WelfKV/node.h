@@ -20,6 +20,13 @@ class node
             return key.size_bytes() <= max_key_bytes && value.size_bytes() <= max_value_bytes;
         }
 
+    private:
+        std::array<std::byte, KeySize> key_storage_{};
+        std::array<std::byte, ValueSize> value_storage_{};
+        key_type key_view_;
+        value_type value_view_;
+
+    public:
         node(key_type key, value_type value)
             : key_view_(key_storage_)
             , value_view_(value_storage_)
@@ -42,11 +49,6 @@ class node
         }
 
     private:
-        std::array<std::byte, KeySize> key_storage_{};
-        std::array<std::byte, ValueSize> value_storage_{};
-        key_type key_view_;
-        value_type value_view_;
-
         void assign_key(key_type key)
         {
             std::memcpy(key_storage_.data(), key.data(), KeySize);

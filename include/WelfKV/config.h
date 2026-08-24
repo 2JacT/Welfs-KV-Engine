@@ -3,12 +3,12 @@
 #include <WelfKV/node.h>
 #include <WelfKV/bucket.h>
 #include <WelfKV/hashfunctions.h>
-#include <WelfKV/strategy.h>
+#include <WelfKV/table.h>
 
 template<
     std::size_t KeySize = default_key_size,
     std::size_t ValueSize = default_value_size,
-    template<typename, typename, typename, typename> class StrategyTemplate = linear_probing_strategy,
+    template<typename, typename, typename, typename> class TableTemplate = linear_probing_table,
     template<typename, typename, typename> class BucketTemplate = addressed_bucket,
     template<typename> class HashFunctionTemplate = xxhash_function>
 struct store_config
@@ -21,13 +21,13 @@ struct store_config
     using node_type = node<KeySize, ValueSize>;
     using bucket_type = BucketTemplate<Key, Value, node_type>;
     using hash_function_type = HashFunctionTemplate<Key>;
-    using strategy_type = StrategyTemplate<Key, Value, bucket_type, hash_function_type>;
+    using table_type = TableTemplate<Key, Value, bucket_type, hash_function_type>;
 
-    static_assert(HashTableStrategy<strategy_type>);
+    static_assert(HashTable<table_type>);
     static_assert(
-        (!strategy_type::uses_probing && !strategy_type::requires_addressed_bucket)
+        (!table_type::uses_probing && !table_type::requires_addressed_bucket)
             || bucket_type::is_addressed,
-        "This strategy requires an addressed bucket type");
+        "This table requires an addressed bucket type");
 };
 
 // Set the config here:
