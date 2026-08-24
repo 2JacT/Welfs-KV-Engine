@@ -3,6 +3,8 @@
 #include <WelfKV/node.h>
 #include <list>
 #include <optional>
+#include <span>
+#include <cstring>
 
 // Bucket represents the slot a key hashes to and the building block of our key value stores.
 // While the probing algorithm defines how we traverse buckets to check for an open slot, the bucket defines when it is full or empty.
@@ -16,6 +18,11 @@ class bucket
         virtual bool contains(const KeyType& key) = 0;
         virtual bool is_empty() = 0;
         virtual bool is_full() = 0;
+        virtual bool displace(
+            KeyType key,
+            ValueType value,
+            std::span<std::byte> evicted_key_out,
+            std::span<std::byte> evicted_value_out) = 0;
         virtual ~bucket() = default;
 };
 
@@ -66,7 +73,10 @@ class chained_bucket : public bucket<KeyType, ValueType, NodeType>
             {
                 if (bytes_equal(n.get_key(), key))
                 {
-                    value = n.get_value();
+                    std::memcpy(
+                        const_cast<std::byte*>(value.data()),
+                        n.get_value().data(),
+                        value.size_bytes());
                     return true;
                 }
             }
@@ -88,6 +98,14 @@ class chained_bucket : public bucket<KeyType, ValueType, NodeType>
             return nodes_.empty();
         }
         bool is_full() override
+        {
+            return false;
+        }
+        bool displace(
+            KeyType key,
+            ValueType value,
+            std::span<std::byte> evicted_key_out,
+            std::span<std::byte> evicted_value_out) override
         {
             return false;
         }
@@ -132,7 +150,10 @@ class addressed_bucket : public bucket<KeyType, ValueType, NodeType>
         {
             if (node_.has_value() && bytes_equal(node_->get_key(), key))
             {
-                value = node_->get_value();
+                std::memcpy(
+                    const_cast<std::byte*>(value.data()),
+                    node_->get_value().data(),
+                    value.size_bytes());
                 return true;
             }
             return false;
@@ -148,5 +169,40 @@ class addressed_bucket : public bucket<KeyType, ValueType, NodeType>
         bool is_full() override
         {
             return node_.has_value();
+        }
+        bool displace(
+            KeyType key,
+            ValueType value,
+            std::span<std::byte> evicted_key_out,
+            std::span<std::byte> evicted_value_out) override
+        {
+            if (!NodeType::fits(key, value))
+            {
+                return false;
+            }
+            if (!node_.has_value())
+            {
+                node_.emplace(key, value);
+                return true;
+            }
+            if (bytes_equal(node_->get_key(), key))
+            {
+                return node_->set_value(value);
+            }
+            if (evicted_key_out.size_bytes() < node_->get_key().size_bytes()
+                || evicted_value_out.size_bytes() < node_->get_value().size_bytes())
+            {
+                return false;
+            }
+            std::memcpy(
+                evicted_key_out.data(),
+                node_->get_key().data(),
+                node_->get_key().size_bytes());
+            std::memcpy(
+                evicted_value_out.data(),
+                node_->get_value().data(),
+                node_->get_value().size_bytes());
+            node_.emplace(key, value);
+            return true;
         }
 };

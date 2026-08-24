@@ -25,8 +25,9 @@ struct store_config
 
     static_assert(HashTableStrategy<strategy_type>);
     static_assert(
-        !strategy_type::uses_probing || bucket_type::is_addressed,
-        "Probing strategies require an addressed bucket type");
+        (!strategy_type::uses_probing && !strategy_type::requires_addressed_bucket)
+            || bucket_type::is_addressed,
+        "This strategy requires an addressed bucket type");
 };
 
 // Set the config here:

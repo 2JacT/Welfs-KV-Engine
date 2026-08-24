@@ -1,6 +1,7 @@
 #pragma once
 //Include all strategy implementations <Start>
 #include <WelfKV/strategies/probing/linear_probing_strategy.h>
+#include <WelfKV/strategies/cuckoo_strategy.h>
 //Include all strategy implementations <End>
 #include <concepts>
 #include <cstddef>

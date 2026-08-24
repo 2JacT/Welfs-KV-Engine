@@ -25,5 +25,10 @@ target_compile_definitions(workload_test PRIVATE
     WORKLOAD_CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/config/workload.cfg")
 target_link_libraries(workload_test PRIVATE GTest::gtest_main xxHash::xxhash)
 
+add_executable(cuckoo_strategy_test tests/cuckoo_strategy_test.cpp)
+target_include_directories(cuckoo_strategy_test PRIVATE include tests)
+target_link_libraries(cuckoo_strategy_test PRIVATE GTest::gtest_main xxHash::xxhash)
+
 include(GoogleTest)
 gtest_discover_tests(workload_test)
+gtest_discover_tests(cuckoo_strategy_test)

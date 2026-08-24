@@ -17,6 +17,7 @@ struct linear_probing_strategy : Probing_Strategy<Key, Value, BucketType, HashFn
     using hash_function_type = HashFn;
 
     static constexpr bool uses_probing = true;
+    static constexpr bool requires_addressed_bucket = false;
 
     static bool insert(Key key, Value value, std::vector<BucketType>& buckets)
     {
